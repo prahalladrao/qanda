@@ -1,16 +1,18 @@
 package com.stackoverflow.qanda.repository;
 
 import com.stackoverflow.qanda.model.Post;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface PostRepo {
+public interface PostRepo
+{
 
     Post postQuestion(Post post);
 
-    List<Post> getPosts();
+    Page<Post> getPosts(int page, int size);
 
     boolean postAnswer(Post post);
 
@@ -27,4 +29,16 @@ public interface PostRepo {
     List<Post> getOldestPosts();
 
     List<Post> getUnanswered();
+
+    boolean updateAnswerComment(Post post);
+
+    boolean updateAnswer(Post post);
+
+    boolean updateQuestion(Post post);
+
+    boolean deleteQuestion(long postId);
+
+    boolean deleteAnswer(Post post);
+
+   // boolean deleteAnswerComment(Post post);
 }

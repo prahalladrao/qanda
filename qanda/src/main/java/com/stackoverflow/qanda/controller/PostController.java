@@ -5,6 +5,7 @@ import com.stackoverflow.qanda.model.Post;
 import com.stackoverflow.qanda.repository.PostRepo;
 import com.stackoverflow.qanda.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,17 +18,38 @@ public class PostController {
     @Autowired
     private PostService postService;
     private Post post;
+    @GetMapping
+    public ResponseEntity<Page<Post>> getAll(@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "1") int size)
+    {
+        return new ResponseEntity<Page<Post>>(postService.getAll(page,size),HttpStatus.OK);
+
+    }
     @PostMapping
     public ResponseEntity<Post> postQuestion(@RequestBody Post post)
      {
-         System.out.println("posting...");
+         //System.out.println("posting...");
          post=postService.postQuestion(post);
          if(post==null)
              return new ResponseEntity<Post>(HttpStatus.BAD_REQUEST);
          else
              return new ResponseEntity<Post>(HttpStatus.OK);
      }
+    @PutMapping
+    public ResponseEntity<Post> updateQuestion(@RequestBody Post post)
+    {
+        if(postService.updateQuestion(post))
+            return new ResponseEntity<Post>(HttpStatus.OK);
 
+            return new ResponseEntity<Post>(HttpStatus.BAD_REQUEST);
+    }
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Post> deleteQuestion(@PathVariable long postId)
+    {
+        if(postService.deleteQuestion(postId))
+            return new ResponseEntity<Post>(HttpStatus.OK);
+
+        return new ResponseEntity<Post>(HttpStatus.BAD_REQUEST);
+    }
      @PostMapping("/answer")
      public ResponseEntity postAnswer(@RequestBody Post post)
      {
@@ -35,6 +57,20 @@ public class PostController {
            return new ResponseEntity(HttpStatus.OK);
          return new ResponseEntity(HttpStatus.BAD_REQUEST);
      }
+    @PutMapping("/answer")
+    public ResponseEntity updateAnswer(@RequestBody Post post)
+    {
+        if(postService.updateAnswer(post))
+            return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+    @DeleteMapping("/answer")
+    public ResponseEntity deleteAnswer(@RequestBody Post post)
+    {
+        if(postService.deleteAnswer(post))
+            return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
     @PostMapping("/answer/comment")
     public ResponseEntity postAnswerComment(@RequestBody Post post)
     {
@@ -42,6 +78,20 @@ public class PostController {
             return new ResponseEntity(HttpStatus.OK);
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
+    @PutMapping("/answer/comment")
+    public ResponseEntity updateAnswerComment(@RequestBody Post post)
+    {
+        if(postService.updateAnswerComment(post))
+            return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+//    @DeleteMapping("/answer/comment")
+//    public ResponseEntity deleteAnswerComment(@RequestBody Post post)
+//    {
+//        if(postService.deleteAnswerComment(post))
+//            return new ResponseEntity(HttpStatus.OK);
+//        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+//    }
     @GetMapping("/{id}")
     public ResponseEntity getPostById(@PathVariable long id)
     {
@@ -50,12 +100,7 @@ public class PostController {
             return new ResponseEntity<Post>(post,HttpStatus.OK);
          return new ResponseEntity(post,HttpStatus.BAD_REQUEST);
     }
-    @GetMapping
-    public List<Post> getAll()
-    {
-        return postService.getAll();
-
-    }
+    //vote end points
     @PostMapping("/{postId}/{voteType}")
     public ResponseEntity updateQuestionVotes(@PathVariable long postId,@PathVariable String voteType)
     {
@@ -70,6 +115,7 @@ public class PostController {
             return new ResponseEntity<Post>(HttpStatus.OK);
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
+    //filtering end points
     @GetMapping("/newest")
     public List<Post> getNewestPosts()
     {
@@ -81,9 +127,11 @@ public class PostController {
         return postService.getOldestPosts();
     }
     @GetMapping("/unanswered")
-    public List<Post> getUnansweredPosts()
+    public ResponseEntity<List<Post>> getUnansweredPosts()
     {
-        return postService.getUnanswered();
+        List<Post> posts=postService.getUnanswered();
+        return new ResponseEntity<List<Post>>(posts,HttpStatus.OK);
     }
+
 
 }

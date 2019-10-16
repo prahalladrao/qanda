@@ -4,6 +4,9 @@ package com.stackoverflow.qanda.repository;
 import com.stackoverflow.qanda.model.*;
 import com.stackoverflow.qanda.service.SequenceGeneratorService;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -12,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -28,19 +32,158 @@ public class PostRepoImpl implements PostRepo {
     private Answer answer;
     private Comment comment;
     private MongoOperations mongoOperations;
+    private Date date;
 
     public Post postQuestion(Post post)
     {
         post.setPostId(sequenceGenerator.generateSequence(Question.seq_name));
         //System.out.println(post.getQuestion());
         post.getQuestion().setQuestionId(sequenceGenerator.generateSequence(Question.seq_name));
+        date=new Date(System.currentTimeMillis());
+        post.getQuestion().setDateCreated(date);
+        post.getQuestion().setDateLastupdated(date);
+        post.setDateLastupdated(date);
         return mongoTemplate.save(post);
+    }
+    @Override
+    public boolean updateQuestion(Post post) {
+        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
+        if(postInDb!=null)
+        {
+            Question questionToBeUpdated=post.getQuestion();
+            if(questionToBeUpdated==null)
+                return false;
+            else
+            {
+                Question questionInDb=postInDb.getQuestion();
+                date=new Date(System.currentTimeMillis());
+                questionInDb.setDateLastupdated(date);
+                questionInDb.setQuestionBody(questionToBeUpdated.getQuestionBody());
+                postInDb.setDateLastupdated(date);
+
+            }
+            postInDb=mongoTemplate.save(postInDb);
+            if(postInDb!=null)
+                return true;
+            return false;
+        }
+        else
+        {
+            post.setPostId(sequenceGenerator.generateSequence(Question.seq_name));
+            Question question=post.getQuestion();
+            question.setQuestionId(sequenceGenerator.generateSequence(Question.seq_name));
+            date=new Date(System.currentTimeMillis());
+            question.setDateCreated(date);
+            question.setDateLastupdated(date);
+            post.setDateLastupdated(date);
+            postInDb=mongoTemplate.save(post);
+            if(postInDb==null)
+                return false;
+            return true;
+        }
     }
 
     @Override
-    public List<Post> getPosts()
+    public boolean deleteQuestion(long postId) {
+        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(postId)),Post.class);
+        if(postInDb==null)
+            return false;
+        else
+        {
+           if(mongoTemplate.findAndRemove(new Query().addCriteria(Criteria.where("_id").is(postId)),Post.class)==null)
+           return false;
+           return true;
+        }
+    }
+
+    @Override
+    public boolean deleteAnswer(Post post) {
+        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
+        if(postInDb==null)
+            return false;
+        else
+        {
+            long answerId=post.getAnswers().get(0).getAnswerId();
+            Answer answerToBeDeleted=null;
+            List<Answer> answers=postInDb.getAnswers();
+            for(Answer answer: answers)
+            {
+                if(answer.getAnswerId()==answerId)
+                {
+                     answerToBeDeleted=answer;
+
+                    System.out.println("answer removed");
+
+                }
+
+            }
+            if(answerToBeDeleted==null)
+                return false;
+            else
+                postInDb.getAnswers().remove(answerToBeDeleted);
+            postInDb=mongoTemplate.save(postInDb);
+            if(postInDb.getAnswers().contains(answerToBeDeleted))
+                return false;
+
+            return true;
+        }
+    }
+
+//    @Override
+//    public boolean deleteAnswerComment(Post post) {
+//        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
+//        if(postInDb==null)
+//            return false;
+//        else
+//        {
+//            Answer answerToBeEffected=null;
+//            long answerId=post.getAnswers().get(0).getAnswerId();
+//            Comment commentToBeDeleted=null;
+//            List<Answer> answers=postInDb.getAnswers();
+//            for(Answer answer: answers)
+//            {
+//                if(answer.getAnswerId()==answerId)
+//                {
+//                    answerToBeEffected=answer;
+//                    for(Comment comment:answer.getComments())
+//                    {
+//                        if (comment.getCommentId() == answerToBeEffected.getComments().get(0).getCommentId()) {
+//                            commentToBeDeleted = comment;
+//                            if (!answerToBeEffected.getComments().remove(comment))
+//                                return false;
+//                        }
+//                    }
+//
+//                    System.out.println("answer removed");
+//
+//                }
+//
+//            }
+//            if(answerToBeDeleted==null)
+//                return false;
+//            else
+//                postInDb.getAnswers().remove(answerToBeDeleted);
+//            postInDb=mongoTemplate.save(postInDb);
+//            if(postInDb.getAnswers().contains(answerToBeDeleted))
+//                return false;
+//
+//            return true;
+//        }
+//    }
+
+    @Override
+    public Page<Post> getPosts(int page, int size)
     {
-        return mongoTemplate.findAll(Post.class,"posts");
+        int numberOfPosts=mongoTemplate.findAll(Post.class,"posts").size();
+//        int page=numberOfPosts/2;
+//        Pageable pageable = PageRequest.of(page,2);
+//        Query query = new Query().with(pageable);
+//        List<Post> list = mongoTemplate.find(query, Post.class);
+//        return PageableExecutionUtils.getPage(
+//                list,
+//                pageable,
+//                () -> mongoTemplate.count(query, Post.class));
+        return postCrudRepo.findAll(PageRequest.of(page,size));
     }
 
 
@@ -48,18 +191,21 @@ public class PostRepoImpl implements PostRepo {
 
     @Override
     public boolean postAnswer(Post post) {
-       // System.out.println(post);
-
         postInDb =mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
-        //postInDb=postList.get(0);
-        //System.out.println(post+" "+post.getAnswers().get(post.getAnswers().size()-1));
-       // System.out.println(questionInDb+" "+null);
-        //System.out.println(postInDb);
+
+        date=new Date(System.currentTimeMillis());
         if(post.getAnswers()!=null)
-        answer=post.getAnswers().get(0);
+        {
+            answer=post.getAnswers().get(0);
+
+            answer.setDateCreated(date);
+            answer.setDateLastupdated(date);
+
+        }
         if(answer!=null)
-        answer.setAnswerId(sequenceGenerator.generateSequence(Answer.seq_name));
+            answer.setAnswerId(sequenceGenerator.generateSequence(Answer.seq_name));
         postInDb.setAnswers(post.getAnswers());
+        postInDb.setDateLastupdated(date);
         postInDb=mongoTemplate.save(postInDb);
         //System.out.println(postInDb.getAnswers().get(0));
 //        if(postInDb.getAnswers().get(postInDb.getAnswers().size()-1).equals(post.getAnswers().get(0)))
@@ -79,31 +225,19 @@ public class PostRepoImpl implements PostRepo {
         {
                     if (answer.getAnswerId()==post.getAnswers().get(0).getAnswerId())
                     {
-                        post.getAnswers().get(0).getComments().get(0).setCommentId(sequenceGenerator.generateSequence(Comment.seq_name));
+                        date=new Date(System.currentTimeMillis());
+                        Comment comment=post.getAnswers().get(0).getComments().get(0);
+                        comment.setCommentId(sequenceGenerator.generateSequence(Comment.seq_name));
+                        comment.setDateCreated(date);
+                        comment.setDateLastupdated(date);
                         if(answer.getComments()==null)
                             answer.setComments(new ArrayList<Comment>());
-                        answer.getComments().add(post.getAnswers().get(0).getComments().get(0));
+                        answer.getComments().add(comment);
                     }
         }
 
-        post=mongoTemplate.save(postInDb);
-//        Optional<Answer> answers=answerRepo.findById(post.getAnswers().get(0).getAnswerId());
-//        if(answers.isPresent())
-//            System.out.println(answers.get());
-//         answerRepo.findAll().stream().forEach(a->System.out.print(a));
-//        UnwindOperation unwind =  Aggregation.unwind("answers");
-//        MatchOperation match = Aggregation.match(Criteria.where("postId").is(post.getPostId()).and("answers.answerId").is(post.getAnswers().get(0).getAnswerId()));
-//        Aggregation aggregation = Aggregation.newAggregation(unwind,match);
-//        AggregationResults<PostUnwind> results = mongoOperations.aggregate(aggregation, "postUnwind",
-//                PostUnwind.class);
-//         for(PostUnwind:results.getMappedResults())
-//         {
-//             System.out.println();
-//         }
-//        postInDb.getAnswers().add(post.getAnswers().get(0));
-//        if(postInDb.getComments().equals(null))
-//            answerInDb.setComments(new ArrayList<Comment>());
-        if(post!=null)
+        postInDb=mongoTemplate.save(postInDb);
+        if(postInDb!=null)
             return true;
         return false;
     }
@@ -176,6 +310,80 @@ public class PostRepoImpl implements PostRepo {
     public List<Post> getUnanswered()
     {
 //       QPost.ans
-        return null;
+        Query query=new Query();
+        query.addCriteria(Criteria.where("answers").is(null));
+        List<Post> posts=mongoTemplate.find(query,Post.class);
+        return posts;
     }
+
+    @Override
+    public boolean updateAnswerComment(Post post)
+    {
+        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
+        if(postInDb!=null)
+        {
+
+            List<Answer> answers = postInDb.getAnswers();
+            if(answers.isEmpty())
+                return false;
+            Answer answerToBeUpdated=post.getAnswers().get(0);
+            if(answerToBeUpdated==null)
+                return false;
+            for(Answer answer: answers)
+            {
+                if(answer.getAnswerId()==answerToBeUpdated.getAnswerId())
+                {
+                   for(Comment comment:answer.getComments())
+                   {
+                      if(comment.getCommentId()==answerToBeUpdated.getComments().get(0).getCommentId())
+                      {
+                          date=new Date(System.currentTimeMillis());
+                          comment.setDateLastupdated(date);
+                          comment.setCommentBody(answerToBeUpdated.getComments().get(0).getCommentBody());
+                          postInDb.setDateLastupdated(date);
+                      }
+                   }
+                }
+            }
+            postInDb=mongoTemplate.save(postInDb);
+            if(postInDb!=null)
+                return true;
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateAnswer(Post post) {
+        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
+        if(postInDb!=null)
+        {
+
+            List<Answer> answers = postInDb.getAnswers();
+            if(answers.isEmpty())
+                return false;
+            Answer answerToBeUpdated=post.getAnswers().get(0);
+            if(answerToBeUpdated==null)
+                return false;
+            for(Answer answer: answers)
+            {
+                if(answer.getAnswerId()==answerToBeUpdated.getAnswerId())
+                {
+
+                            date=new Date(System.currentTimeMillis());
+                            answer.setDateLastupdated(date);
+                            answer.setAnswerBody(answerToBeUpdated.getAnswerBody());
+                            postInDb.setDateLastupdated(date);
+
+                }
+            }
+            postInDb=mongoTemplate.save(postInDb);
+            if(postInDb!=null)
+                return true;
+            return false;
+        }
+        return false;
+    }
+
+
 }
