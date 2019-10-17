@@ -1,5 +1,6 @@
 package com.stackoverflow.qanda.repository;
 
+import com.stackoverflow.qanda.model.PageResponseModel;
 import com.stackoverflow.qanda.model.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,7 @@ public interface PostRepo
 
     Post postQuestion(Post post);
 
-    Page<Post> getPosts(int page, int size);
+    PageResponseModel getAllPosts(int page, int size);
 
     boolean postAnswer(Post post);
 
@@ -40,5 +41,7 @@ public interface PostRepo
 
     boolean deleteAnswer(Post post);
 
-   // boolean deleteAnswerComment(Post post);
+    PageResponseModel getTaggedPosts(String tag, int page, int size);
+
+    // boolean deleteAnswerComment(Post post);
 }

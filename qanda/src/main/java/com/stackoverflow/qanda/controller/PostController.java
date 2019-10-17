@@ -1,6 +1,7 @@
 package com.stackoverflow.qanda.controller;
 
 import com.stackoverflow.qanda.model.Answer;
+import com.stackoverflow.qanda.model.PageResponseModel;
 import com.stackoverflow.qanda.model.Post;
 import com.stackoverflow.qanda.repository.PostRepo;
 import com.stackoverflow.qanda.service.PostService;
@@ -19,9 +20,9 @@ public class PostController {
     private PostService postService;
     private Post post;
     @GetMapping
-    public ResponseEntity<Page<Post>> getAll(@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "1") int size)
+    public ResponseEntity<PageResponseModel> getAllPosts(@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "1") int size)
     {
-        return new ResponseEntity<Page<Post>>(postService.getAll(page,size),HttpStatus.OK);
+        return new ResponseEntity<PageResponseModel>(postService.getAllPosts(page,size),HttpStatus.OK);
 
     }
     @PostMapping
@@ -132,6 +133,13 @@ public class PostController {
         List<Post> posts=postService.getUnanswered();
         return new ResponseEntity<List<Post>>(posts,HttpStatus.OK);
     }
+    //getting posts by tag
+    @GetMapping("/tag")
+    public ResponseEntity<PageResponseModel> getTaggedPosts(@RequestParam String tag,@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "1") int size)
+    {
+        //System.out.println("controller.."+tag);
 
+        return new ResponseEntity<PageResponseModel>(postService.getTaggedPosts(tag,page,size),HttpStatus.OK);
+    }
 
 }

@@ -21,6 +21,14 @@ public class Post {
     private Date dateCreated;
     private Date dateLastupdated;
 
+    private List<String> tags;
+
+    public List<String> getTags() {
+        return tags;
+    }
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
     @Override
     public String toString() {
         return "Post{" +

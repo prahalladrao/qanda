@@ -1,6 +1,7 @@
 package com.stackoverflow.qanda.service;
 
 
+import com.stackoverflow.qanda.model.PageResponseModel;
 import com.stackoverflow.qanda.model.Post;
 import com.stackoverflow.qanda.repository.PostRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,8 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Page<Post> getAll(int page, int size) {
-        return postRepo.getPosts(page,size);
+    public PageResponseModel getAllPosts(int page, int size) {
+        return postRepo.getAllPosts(page,size);
     }
 
     @Override
@@ -86,6 +87,11 @@ public class PostServiceImpl implements PostService {
     public boolean deleteAnswer(Post post)
     {
         return postRepo.deleteAnswer(post);
+    }
+
+    @Override
+    public PageResponseModel getTaggedPosts(String tag, int page, int size) {
+        return postRepo.getTaggedPosts(tag,page,size);
     }
 
 //    @Override

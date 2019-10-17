@@ -3,7 +3,9 @@ package com.stackoverflow.qanda.model;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -15,8 +17,13 @@ public class Question {
     public static final String seq_name="posts_seq";
     @Id
     private long questionId;
+//    @TextIndexed(weight=2F)
+//    @Field("questionText")
     private String questionText;
     private String questionBody;
+
+
+
     private List<Comment> comments;
     private long votes;
     private Date dateCreated;
@@ -46,12 +53,7 @@ public class Question {
         this.dateLastupdated = dateLastupdated;
     }
 
-    public Question(long questionId, String questionText, String questionBody, List<Comment> comments) {
-        this.questionId = questionId;
-        this.questionText = questionText;
-        this.questionBody = questionBody;
-        this.comments = comments;
-    }
+
 
     public long getQuestionId() {
         return questionId;

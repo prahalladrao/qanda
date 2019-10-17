@@ -10,8 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.TextCriteria;
+import org.springframework.data.mongodb.core.query.TextQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -26,6 +29,8 @@ public class PostRepoImpl implements PostRepo {
     private SequenceGeneratorService sequenceGenerator;
     @Autowired
     PostCrudRepo postCrudRepo;
+    @Autowired
+    private CrudRepository crudRepository;
     private Post postInDb;
     private Question questionInDb;
     private Answer answerInDb;
@@ -43,6 +48,11 @@ public class PostRepoImpl implements PostRepo {
         post.getQuestion().setDateCreated(date);
         post.getQuestion().setDateLastupdated(date);
         post.setDateLastupdated(date);
+        TextIndexDefinition textIndex = new TextIndexDefinition.TextIndexDefinitionBuilder()
+                .onField("tags",3F)
+                .build();
+        mongoTemplate.indexOps(Post.class).ensureIndex(textIndex);
+        // return mongoTemplate.findOne(query, Post.class);
         return mongoTemplate.save(post);
     }
     @Override
@@ -129,6 +139,21 @@ public class PostRepoImpl implements PostRepo {
         }
     }
 
+
+    public PageResponseModel getTaggedPosts(String tag, int page, int size) {
+
+            TextCriteria criteria = TextCriteria.forDefaultLanguage().matching(tag);
+            Query query = TextQuery.queryText(criteria);
+            int numberOfPosts=mongoTemplate.find(query,Post.class,"posts").size();
+            query=TextQuery.queryText(criteria).with(PageRequest.of(page,size));
+            return new PageResponseModel(numberOfPosts,postCrudRepo.findAllBy(criteria,PageRequest.of(page,size)));
+            //return postCrudRepo.findAllBy(criteria);
+            //System.out.println(crudRepository.findAllBy(criteria).size());
+            //return null;
+
+
+    }
+
 //    @Override
 //    public boolean deleteAnswerComment(Post post) {
 //        postInDb=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
@@ -172,7 +197,7 @@ public class PostRepoImpl implements PostRepo {
 //    }
 
     @Override
-    public Page<Post> getPosts(int page, int size)
+    public PageResponseModel getAllPosts(int page, int size)
     {
         int numberOfPosts=mongoTemplate.findAll(Post.class,"posts").size();
 //        int page=numberOfPosts/2;
@@ -183,7 +208,7 @@ public class PostRepoImpl implements PostRepo {
 //                list,
 //                pageable,
 //                () -> mongoTemplate.count(query, Post.class));
-        return postCrudRepo.findAll(PageRequest.of(page,size));
+        return new PageResponseModel(numberOfPosts,postCrudRepo.findAll(PageRequest.of(page,size)));
     }
 
 
