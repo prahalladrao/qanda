@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+
 
 @Document(collection = "posts")
 public class Question {
@@ -22,8 +24,24 @@ public class Question {
     private String questionText;
     private String questionBody;
 
+    public String getUserName() {
+        return userName;
+    }
 
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
+    public Set<String> getSetOfUsersVoted() {
+        return setOfUsersVoted;
+    }
+
+    public void setSetOfUsersVoted(Set<String> setOfUsersVoted) {
+        this.setOfUsersVoted = setOfUsersVoted;
+    }
+
+    private String userName;
+    private Set<String> setOfUsersVoted;
     private List<Comment> comments;
     private long votes;
     private Date dateCreated;

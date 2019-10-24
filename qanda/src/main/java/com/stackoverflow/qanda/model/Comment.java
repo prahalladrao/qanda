@@ -1,10 +1,11 @@
 package com.stackoverflow.qanda.model;
 
-import org.bson.types.ObjectId;
+
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.Set;
 
 @Document(collection="posts")
 public class Comment {
@@ -14,6 +15,25 @@ public class Comment {
     private String commentBody;
     private Date dateCreated;
     private Date dateLastupdated;
+    private long userName;
+
+    public long getUserName() {
+        return userName;
+    }
+
+    public void setUserName(long userName) {
+        this.userName = userName;
+    }
+
+    public Set<String> getSetOfUsersVoted() {
+        return setOfUsersVoted;
+    }
+
+    public void setSetOfUsersVoted(Set<String> setOfUsersVoted) {
+        this.setOfUsersVoted = setOfUsersVoted;
+    }
+
+    private Set<String> setOfUsersVoted;
 
     public Date getDateCreated() {
         return dateCreated;

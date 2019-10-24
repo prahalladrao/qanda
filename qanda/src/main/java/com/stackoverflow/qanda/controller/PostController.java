@@ -22,6 +22,7 @@ public class PostController {
     @GetMapping
     public ResponseEntity<PageResponseModel> getAllPosts(@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "1") int size)
     {
+        //System.out.println(userName);
         return new ResponseEntity<PageResponseModel>(postService.getAllPosts(page,size),HttpStatus.OK);
 
     }

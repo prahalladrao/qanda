@@ -200,14 +200,6 @@ public class PostRepoImpl implements PostRepo {
     public PageResponseModel getAllPosts(int page, int size)
     {
         int numberOfPosts=mongoTemplate.findAll(Post.class,"posts").size();
-//        int page=numberOfPosts/2;
-//        Pageable pageable = PageRequest.of(page,2);
-//        Query query = new Query().with(pageable);
-//        List<Post> list = mongoTemplate.find(query, Post.class);
-//        return PageableExecutionUtils.getPage(
-//                list,
-//                pageable,
-//                () -> mongoTemplate.count(query, Post.class));
         return new PageResponseModel(numberOfPosts,postCrudRepo.findAll(PageRequest.of(page,size)));
     }
 
