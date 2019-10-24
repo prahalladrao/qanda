@@ -37,16 +37,19 @@ public class PostRepoImpl implements PostRepo {
     private Answer answer;
     private Comment comment;
     private MongoOperations mongoOperations;
+    @Autowired
     private Date date;
 
     public Post postQuestion(Post post)
     {
+
         post.setPostId(sequenceGenerator.generateSequence(Question.seq_name));
         //System.out.println(post.getQuestion());
         post.getQuestion().setQuestionId(sequenceGenerator.generateSequence(Question.seq_name));
-        date=new Date(System.currentTimeMillis());
+        //date=new Date(System.currentTimeMillis());
         post.getQuestion().setDateCreated(date);
         post.getQuestion().setDateLastupdated(date);
+        post.setDateCreated(date);
         post.setDateLastupdated(date);
         TextIndexDefinition textIndex = new TextIndexDefinition.TextIndexDefinitionBuilder()
                 .onField("tags",3F)
@@ -66,8 +69,11 @@ public class PostRepoImpl implements PostRepo {
             else
             {
                 Question questionInDb=postInDb.getQuestion();
-                date=new Date(System.currentTimeMillis());
+                //date=new Date(System.currentTimeMillis());
                 questionInDb.setDateLastupdated(date);
+                if(questionToBeUpdated.getQuestionText()!=null)
+                questionInDb.setQuestionText(questionToBeUpdated.getQuestionText());
+                if(questionToBeUpdated.getQuestionBody()!=null)
                 questionInDb.setQuestionBody(questionToBeUpdated.getQuestionBody());
                 postInDb.setDateLastupdated(date);
 
@@ -82,7 +88,7 @@ public class PostRepoImpl implements PostRepo {
             post.setPostId(sequenceGenerator.generateSequence(Question.seq_name));
             Question question=post.getQuestion();
             question.setQuestionId(sequenceGenerator.generateSequence(Question.seq_name));
-            date=new Date(System.currentTimeMillis());
+            //date=new Date(System.currentTimeMillis());
             question.setDateCreated(date);
             question.setDateLastupdated(date);
             post.setDateLastupdated(date);
@@ -210,7 +216,7 @@ public class PostRepoImpl implements PostRepo {
     public boolean postAnswer(Post post) {
         postInDb =mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(post.getPostId())),Post.class);
 
-        date=new Date(System.currentTimeMillis());
+        //date=new Date(System.currentTimeMillis());
         if(post.getAnswers()!=null)
         {
             answer=post.getAnswers().get(0);
@@ -242,7 +248,7 @@ public class PostRepoImpl implements PostRepo {
         {
                     if (answer.getAnswerId()==post.getAnswers().get(0).getAnswerId())
                     {
-                        date=new Date(System.currentTimeMillis());
+                        //date=new Date(System.currentTimeMillis());
                         Comment comment=post.getAnswers().get(0).getComments().get(0);
                         comment.setCommentId(sequenceGenerator.generateSequence(Comment.seq_name));
                         comment.setDateCreated(date);
@@ -354,7 +360,7 @@ public class PostRepoImpl implements PostRepo {
                    {
                       if(comment.getCommentId()==answerToBeUpdated.getComments().get(0).getCommentId())
                       {
-                          date=new Date(System.currentTimeMillis());
+                          //date=new Date(System.currentTimeMillis());
                           comment.setDateLastupdated(date);
                           comment.setCommentBody(answerToBeUpdated.getComments().get(0).getCommentBody());
                           postInDb.setDateLastupdated(date);
@@ -387,7 +393,7 @@ public class PostRepoImpl implements PostRepo {
                 if(answer.getAnswerId()==answerToBeUpdated.getAnswerId())
                 {
 
-                            date=new Date(System.currentTimeMillis());
+                            //date=new Date(System.currentTimeMillis());
                             answer.setDateLastupdated(date);
                             answer.setAnswerBody(answerToBeUpdated.getAnswerBody());
                             postInDb.setDateLastupdated(date);
